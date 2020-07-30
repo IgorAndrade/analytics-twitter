@@ -39,6 +39,6 @@ func (s server) Start() error {
 
 //Stop a rest server
 func (s server) Stop() error {
-	fmt.Println("Stopping")
+	fmt.Println("Stopping rest Server")
 	return s.server.Close()
 }

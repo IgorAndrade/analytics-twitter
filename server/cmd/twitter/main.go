@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	rest "github.com/IgorAndrade/analytics-twitter/server/app/api/rest/webserver"
+	"github.com/IgorAndrade/analytics-twitter/server/app/api/twitter"
 	"github.com/IgorAndrade/analytics-twitter/server/app/config"
 	"github.com/IgorAndrade/analytics-twitter/server/app/db/mongo"
 	"github.com/IgorAndrade/analytics-twitter/server/internal/service"
@@ -27,13 +28,14 @@ func main() {
 	defer done()
 	g, gctx := errgroup.WithContext(ctx)
 	s := rest.NewServer(gctx, done)
+	t := twitter.NewTwitterWorker(gctx, done)
 	g.Go(s.Start)
-
+	g.Go(t.Start)
 	g.Go(func() error {
 		signalChannel := make(chan os.Signal, 1)
-		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, os.Kill)
 		defer s.Stop()
-
+		defer t.Stop()
 		select {
 		case sig := <-signalChannel:
 			fmt.Printf("Received signal: %s\n", sig)

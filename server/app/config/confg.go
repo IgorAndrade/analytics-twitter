@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	Rest  Rest
-	Mongo Mongo
+	Rest    Rest
+	Mongo   Mongo
+	Twitter Twitter
 }
 
 type Rest struct {
@@ -20,6 +21,13 @@ type Mongo struct {
 	Address  string
 	User     string
 	Password string
+}
+
+type Twitter struct {
+	Token          string
+	TokenSecret    string
+	ConsumerKey    string
+	ConsumerSecret string
 }
 
 var CONFIG = "config"
@@ -34,6 +42,12 @@ func Define(b *di.Builder) {
 			Address:  os.Getenv("MONGO_URL"),
 			User:     os.Getenv("MONGO_USER"),
 			Password: os.Getenv("MONGO_PASSWORD"),
+		},
+		Twitter: Twitter{
+			Token:          os.Getenv("TWITTER_TOKEN"),
+			TokenSecret:    os.Getenv("TWITTER_TOKEN_SECRET"),
+			ConsumerKey:    os.Getenv("TWITTER_CONSUMER_KEY"),
+			ConsumerSecret: os.Getenv("TWITTER_CONSUMER_SECRET"),
 		},
 	}
 	b.Add(di.Def{
