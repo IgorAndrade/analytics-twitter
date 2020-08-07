@@ -53,7 +53,7 @@ func (t *TwitterWorker) Start() error {
 
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		send(tweet.ID, adapter(tweet))
+		//send(tweet.ID, adapter(tweet))
 	}
 
 	t.listemTimeline()
@@ -89,7 +89,7 @@ loop:
 					if id == t.ID {
 						continue
 					}
-					send(t.ID, adapter(&t))
+					//send(t.ID, adapter(&t))
 					id = t.ID
 				}
 			}

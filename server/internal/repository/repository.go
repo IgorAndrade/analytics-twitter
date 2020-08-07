@@ -7,8 +7,13 @@ import (
 )
 
 const TODO_LIST = "tudoListRepo"
+const ELASTICSEARCH = "Elasticsearch"
 
 type TodoList interface {
 	Create(context.Context, *model.TodoList) error
 	GetAll(context.Context) ([]model.TodoList, error)
+}
+
+type Elasticsearch interface {
+	Post(int64, model.Post) error
 }
