@@ -1,14 +1,16 @@
 package twitter
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/IgorAndrade/analytics-twitter/server/internal/model"
 	"github.com/dghubble/go-twitter/twitter"
 )
 
-func adapter(tweet *twitter.Tweet) {
+func adapter(tweet *twitter.Tweet) model.Post {
 	post := model.Post{}
+	date, _ := time.Parse(time.RubyDate, tweet.CreatedAt)
+	post.CreatedAt = date
 	post.Author = tweet.User.Name
 	post.Text = tweet.Text
 	post.Location = tweet.User.Location
@@ -23,11 +25,5 @@ func adapter(tweet *twitter.Tweet) {
 		}
 		post.Hastags = hastag
 	}
-	// else {
-
-	// 	b, _ := json.Marshal(tweet)
-	// 	fmt.Println(tweet.ID, string(b))
-	// }
-	fmt.Println(tweet.ID, post)
-
+	return post
 }

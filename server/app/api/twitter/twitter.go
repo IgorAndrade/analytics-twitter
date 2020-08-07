@@ -39,46 +39,25 @@ func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc) api.Server
 func (t *TwitterWorker) Start() error {
 	fmt.Println("Starting TwitterWorker")
 	defer t.cancel()
-
-	// stream, err := t.client.Streams.Sample(&twitter.StreamSampleParams{})
-	// if err != nil {
-	// 	return err
-	// }
-
 	filterParams := &twitter.StreamFilterParams{
-		Track:         []string{"golang", "ação", "moeda"},
-		Language:      []string{"pt"},
+		Track:         []string{"#", "canabis", "legalização"},
+		Language:      []string{"pt", "en"},
 		StallWarnings: twitter.Bool(false),
 	}
 	stream, err := t.client.Streams.Filter(filterParams)
-	// params := &twitter.StreamUserParams{
-	// 	With:  "followings",
-	// 	Track: []string{"#"},
-
-	// 	StallWarnings: twitter.Bool(false),
-	// }
-	// stream, err := t.client.Streams.User(params)
 	if err != nil {
 		return err
 	}
 
 	t.stream = stream
-	// tweets, resp, err := t.client.Timelines.HomeTimeline(&twitter.HomeTimelineParams{
-	// 	Count:          2,
-	// 	ExcludeReplies: twitter.Bool(true),
-	// })
-	// fmt.Println(resp)
-	// for _, t := range tweets {
-	// 	adapter(&t)
-	// }
+
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		//	adapter(tweet)
+		send(tweet.ID, adapter(tweet))
 	}
 
-	go t.listemTimeline()
+	t.listemTimeline()
 	demux.HandleChan(stream.Messages)
-	// time.Sleep(20 * time.Minute)
 	return nil
 }
 func (t TwitterWorker) Stop() error {
@@ -90,7 +69,7 @@ func (t TwitterWorker) Stop() error {
 
 func (t TwitterWorker) listemTimeline() {
 	ticker := time.NewTicker(5 * time.Second)
-	time.AfterFunc(10*time.Minute, func() {
+	time.AfterFunc(1*time.Hour, func() {
 		t.cancel()
 	})
 	var id int64 = 0
@@ -100,7 +79,7 @@ loop:
 		case <-ticker.C:
 			{
 				param := &twitter.HomeTimelineParams{
-					Count: 2,
+					Count: 1,
 				}
 				if id > 0 {
 					param.SinceID = id
@@ -110,7 +89,7 @@ loop:
 					if id == t.ID {
 						continue
 					}
-					adapter(&t)
+					send(t.ID, adapter(&t))
 					id = t.ID
 				}
 			}
