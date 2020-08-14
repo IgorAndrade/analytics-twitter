@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/IgorAndrade/analytics-twitter/server/app/api/elasticsearch"
 	rest "github.com/IgorAndrade/analytics-twitter/server/app/api/rest/webserver"
 	"github.com/IgorAndrade/analytics-twitter/server/app/api/twitter"
 	"github.com/IgorAndrade/analytics-twitter/server/app/config"
@@ -21,6 +22,7 @@ func main() {
 	config.Define(b)
 	mongo.Define(b)
 	service.Define(b)
+	elasticsearch.Define(b)
 	config.Build(b)
 	defer config.Container.Delete()
 

@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ func Define(b *di.Builder) {
 		Name:  repository.ELASTICSEARCH,
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
-			c := ctn.Get(config.CONFIG).(config.Config)
+			c := ctn.Get(config.CONFIG).(*config.Config)
 			return newServer(c.Elasticsearch)
 		},
 	})
@@ -70,5 +71,6 @@ func (s Elasticsearch) Post(id int64, m model.Post) error {
 	if res != nil {
 		res.Body.Close()
 	}
+	fmt.Println(id, m)
 	return err
 }
