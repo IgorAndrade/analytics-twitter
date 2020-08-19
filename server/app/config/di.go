@@ -9,10 +9,14 @@ import (
 //Container used to DI
 var Container di.Container
 
-func NewBuilder() *di.Builder {
+func NewBuilder(opts ...func(*di.Builder)) *di.Builder {
 	builder, err := di.NewBuilder()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	for _, f := range opts {
+		f(builder)
 	}
 
 	return builder

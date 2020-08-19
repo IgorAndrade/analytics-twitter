@@ -18,11 +18,7 @@ import (
 )
 
 func main() {
-	b := config.NewBuilder()
-	config.Define(b)
-	mongo.Define(b)
-	service.Define(b)
-	elasticsearch.Define(b)
+	b := config.NewBuilder(config.Define, mongo.Define, service.Define, elasticsearch.Define)
 	config.Build(b)
 	defer config.Container.Delete()
 
