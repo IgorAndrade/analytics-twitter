@@ -15,6 +15,8 @@ type Post struct {
 }
 
 func (p Post) String() string {
-	b, _ := json.Marshal(p)
-	return string(b)
+	if b, err := json.Marshal(p); err == nil {
+		return string(b)
+	}
+	return ""
 }

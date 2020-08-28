@@ -44,7 +44,6 @@ func main() {
 
 		return nil
 	})
-
 	err := g.Wait()
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
