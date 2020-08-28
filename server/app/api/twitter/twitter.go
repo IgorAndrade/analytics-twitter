@@ -7,9 +7,11 @@ import (
 
 	"github.com/IgorAndrade/analytics-twitter/server/app/api"
 	"github.com/IgorAndrade/analytics-twitter/server/app/config"
-	"github.com/IgorAndrade/analytics-twitter/server/internal/repository"
+	"github.com/IgorAndrade/analytics-twitter/server/internal/model"
+	"github.com/IgorAndrade/analytics-twitter/server/internal/usecase"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"github.com/sarulabs/di"
 )
 
 type TwitterWorker struct {
@@ -17,10 +19,17 @@ type TwitterWorker struct {
 	stream *twitter.Stream
 	ctx    context.Context
 	cancel context.CancelFunc
+	poster usecase.Poster
 }
 
-func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc) api.Server {
-	cfg := config.Container.Get(config.CONFIG).(*config.Config)
+func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc, ctn di.Container) api.Server {
+	var p usecase.Poster
+	if err := ctn.Fill(usecase.TWITTER, &p); err != nil {
+		cancel()
+		return nil
+	}
+
+	cfg := ctn.Get(config.NAME).(*config.Config)
 	config := oauth1.NewConfig(cfg.Twitter.ConsumerKey, cfg.Twitter.ConsumerSecret)
 	token := oauth1.NewToken(cfg.Twitter.Token, cfg.Twitter.TokenSecret)
 	// OAuth1 http.Client will automatically authorize Requests
@@ -34,13 +43,14 @@ func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc) api.Server
 		client: client,
 		cancel: cancel,
 		ctx:    ctx,
+		poster: p,
 	}
 }
 
 func (t *TwitterWorker) Start() error {
 	fmt.Println("Starting TwitterWorker")
-	r := config.Container.Get(repository.ELASTICSEARCH).(repository.Elasticsearch)
 	defer t.cancel()
+
 	filterParams := &twitter.StreamFilterParams{
 		Track:         []string{"globo", "sbt"},
 		Language:      []string{"pt"},
@@ -53,26 +63,33 @@ func (t *TwitterWorker) Start() error {
 
 	t.stream = stream
 
-	demux := twitter.NewSwitchDemux()
-	demux.Tweet = func(tweet *twitter.Tweet) {
-		r.Post(tweet.ID, adapter(tweet))
-	}
+	//demux := twitter.NewSwitchDemux()
+	//demux.Tweet = handlerTweet(t.p.SavePost)
 
-	t.listemTimeline(r)
+	t.listemTimeline()
 	//	demux.HandleChan(stream.Messages)
 	return nil
 }
+
+func handlerTweet(send func(int64, model.Post)) func(*twitter.Tweet) {
+	return func(tweet *twitter.Tweet) {
+		send(tweet.ID, adapter(tweet))
+	}
+}
+
 func (t TwitterWorker) Stop() error {
 	fmt.Println("Stopping TwitterWorker")
 	t.cancel()
-	t.stream.Stop()
+	if t.stream != nil {
+		t.stream.Stop()
+	}
 	return nil
 }
 
-func (t TwitterWorker) listemTimeline(r repository.Elasticsearch) {
+func (tw TwitterWorker) listemTimeline() {
 	ticker := time.NewTicker(5 * time.Second)
-	time.AfterFunc(1*time.Hour, func() {
-		t.cancel()
+	time.AfterFunc(2*time.Hour, func() {
+		tw.cancel()
 	})
 	var id int64 = 0
 loop:
@@ -86,16 +103,17 @@ loop:
 				if id > 0 {
 					param.SinceID = id
 				}
-				tweets, _, _ := t.client.Timelines.HomeTimeline(param)
-				for _, t := range tweets {
-					if id == t.ID {
+				tweets, _, _ := tw.client.Timelines.HomeTimeline(param)
+				for _, tweet := range tweets {
+					if id == tweet.ID {
 						continue
 					}
-					r.Post(t.ID, adapter(&t))
-					id = t.ID
+					tw.poster.SavePost(tweet.ID, adapter(&tweet))
+
+					id = tweet.ID
 				}
 			}
-		case <-t.ctx.Done():
+		case <-tw.ctx.Done():
 			{
 				ticker.Stop()
 				break loop
@@ -103,17 +121,4 @@ loop:
 
 		}
 	}
-}
-
-type executor struct {
-	c     chan int
-	total int
-}
-
-func (e *executor) execute(fnc func()) {
-	e.c <- 1
-	go func(c chan int, f func()) {
-		f()
-		<-c
-	}(e.c, fnc)
 }

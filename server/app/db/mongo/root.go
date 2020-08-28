@@ -11,15 +11,15 @@ import (
 	"github.com/sarulabs/di"
 )
 
-const MONGO = "mongo"
+const session = "mongo"
 const DB_NAME = "todo"
 
 func Define(b *di.Builder) {
 	b.Add(di.Def{
-		Name:  MONGO,
+		Name:  session,
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
-			cfg := ctn.Get(config.CONFIG).(*config.Config)
+			cfg := ctn.Get(config.NAME).(*config.Config)
 			s, err := mgo.Dial(cfg.Mongo.Address)
 			if err != nil {
 				log.Fatal(err)
@@ -31,7 +31,7 @@ func Define(b *di.Builder) {
 		Name:  repository.TODO_LIST,
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
-			s := ctn.Get(MONGO).(*mgo.Session)
+			s := ctn.Get(session).(*mgo.Session)
 			return newTodoList(s), nil
 		},
 	})

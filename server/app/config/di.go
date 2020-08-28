@@ -23,6 +23,7 @@ func NewBuilder(opts ...func(*di.Builder)) *di.Builder {
 }
 
 //Build container
-func Build(b *di.Builder) {
+func Build(b *di.Builder) di.Container {
 	Container = b.Build()
+	return Container
 }

@@ -27,7 +27,7 @@ func Define(b *di.Builder) {
 		Name:  repository.ELASTICSEARCH,
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
-			c := ctn.Get(config.CONFIG).(*config.Config)
+			c := ctn.Get(config.NAME).(*config.Config)
 			return newServer(c.Elasticsearch)
 		},
 	})

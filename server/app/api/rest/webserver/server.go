@@ -32,7 +32,7 @@ func NewServer(ctx context.Context, cancel context.CancelFunc) api.Server {
 
 //Start a rest server
 func (s server) Start() error {
-	c := config.Container.Get(config.CONFIG).(*config.Config)
+	c := config.Container.Get(config.NAME).(*config.Config)
 	defer s.cancel()
 	return s.server.Start(c.Rest.Port)
 }

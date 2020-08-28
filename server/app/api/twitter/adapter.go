@@ -28,7 +28,7 @@ func adapter(tweet *twitter.Tweet) model.Post {
 		}
 		post.Hastags = hastag
 	}
-	fmt.Println(tweet)
+	//fmt.Println(tweet)
 	return post
 }
 

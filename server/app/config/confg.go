@@ -37,7 +37,7 @@ type Twitter struct {
 	ConsumerSecret string
 }
 
-var CONFIG = "config"
+var NAME = "config"
 var c *Config
 
 func Define(b *di.Builder) {
@@ -63,7 +63,7 @@ func Define(b *di.Builder) {
 		},
 	}
 	b.Add(di.Def{
-		Name:  CONFIG,
+		Name:  NAME,
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
 			return c, nil
