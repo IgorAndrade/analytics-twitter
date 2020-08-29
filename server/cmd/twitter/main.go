@@ -20,20 +20,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type servers []api.Server
-
-func (list servers) startAll(g *errgroup.Group) {
-	for _, s := range list {
-		g.Go(s.Start)
-	}
-}
-
-func (list servers) stopAll() {
-	for _, s := range list {
-		s.Stop()
-	}
-}
-
 func main() {
 	ctn := initContainer()
 	sub, _ := ctn.SubContainer()
@@ -46,8 +32,8 @@ func main() {
 	s := rest.NewServer(gctx, done)
 	t := twitter.NewTwitterWorker(gctx, done, sub)
 
-	serv := servers{s, t}
-	serv.startAll(g)
+	serv := api.List{s, t}
+	serv.StartAll(g)
 	g.Go(waitSignalChannel(gctx, serv))
 
 	err := g.Wait()
@@ -62,11 +48,11 @@ func main() {
 	}
 }
 
-func waitSignalChannel(gctx context.Context, serv servers) func() error {
+func waitSignalChannel(gctx context.Context, serv api.List) func() error {
 	return func() error {
 		signalChannel := make(chan os.Signal, 1)
 		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, os.Kill, syscall.SIGSEGV)
-		defer serv.stopAll()
+		defer serv.StopAll()
 
 		select {
 		case sig := <-signalChannel:
