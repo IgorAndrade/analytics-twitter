@@ -12,6 +12,7 @@ type Post struct {
 	Text      string    `json:"text,omitempty"`
 	Location  string    `json:"location,omitempty"`
 	Lang      string    `json:"lang,omitempty"`
+	Mentions  []string  `json:"mentions,omitempty"`
 }
 
 func (p Post) String() string {

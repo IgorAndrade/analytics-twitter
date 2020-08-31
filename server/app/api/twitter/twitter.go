@@ -51,23 +51,23 @@ func (t *TwitterWorker) Start() error {
 	fmt.Println("Starting TwitterWorker")
 	defer t.cancel()
 
-	filterParams := &twitter.StreamFilterParams{
-		Track:         []string{"globo", "sbt"},
-		Language:      []string{"pt"},
-		StallWarnings: twitter.Bool(false),
-	}
-	stream, err := t.client.Streams.Filter(filterParams)
-	if err != nil {
-		return err
-	}
+	// filterParams := &twitter.StreamFilterParams{
+	// 	Track:         []string{"Golang", "Java", "nodejs"},
+	// 	Language:      []string{"pt", "en"},
+	// 	StallWarnings: twitter.Bool(false),
+	// }
+	// stream, err := t.client.Streams.Filter(filterParams)
+	// if err != nil {
+	// 	return err
+	// }
 
-	t.stream = stream
+	// t.stream = stream
 
-	//demux := twitter.NewSwitchDemux()
-	//demux.Tweet = handlerTweet(t.p.SavePost)
+	// demux := twitter.NewSwitchDemux()
+	// demux.Tweet = handlerTweet(t.poster.SavePost)
 
 	t.listemTimeline()
-	//	demux.HandleChan(stream.Messages)
+	//demux.HandleChan(stream.Messages)
 	return nil
 }
 
