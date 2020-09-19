@@ -12,7 +12,7 @@ type Usecase interface {
 }
 
 type Twitter struct {
-	r repository.Elasticsearch
+	repository repository.Elasticsearch
 }
 
 func Define(b *di.Builder) {
@@ -27,5 +27,5 @@ func Define(b *di.Builder) {
 }
 
 func new(r repository.Elasticsearch) Usecase {
-	return &Twitter{r: r}
+	return &Twitter{repository: r}
 }

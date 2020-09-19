@@ -88,9 +88,6 @@ func (t TwitterWorker) Stop() error {
 
 func (tw TwitterWorker) listemTimeline() {
 	ticker := time.NewTicker(5 * time.Second)
-	time.AfterFunc(2*time.Hour, func() {
-		tw.cancel()
-	})
 	var id int64 = 0
 loop:
 	for {
@@ -108,8 +105,7 @@ loop:
 					if id == tweet.ID {
 						continue
 					}
-					tw.poster.SavePost(tweet.ID, adapter(&tweet))
-
+					tw.poster.Save(tweet.ID, adapter(&tweet))
 					id = tweet.ID
 				}
 			}
