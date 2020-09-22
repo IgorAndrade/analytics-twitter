@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,13 +31,15 @@ func main() {
 	g, gctx := errgroup.WithContext(ctx)
 
 	s := rest.NewServer(gctx, done)
-	t := twitter.NewTwitterWorker(gctx, done, sub)
-
+	t, err := twitter.NewTwitterWorker(gctx, done, sub)
+	if err != nil {
+		log.Fatal(err)
+	}
 	serv := api.List{s, t}
 	serv.StartAll(g)
 	g.Go(waitSignalChannel(gctx, serv))
 
-	err := g.Wait()
+	err = g.Wait()
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			fmt.Print("context was canceled")

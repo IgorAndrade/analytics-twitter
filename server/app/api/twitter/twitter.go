@@ -22,11 +22,11 @@ type TwitterWorker struct {
 	poster usecase.Poster
 }
 
-func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc, ctn di.Container) api.Server {
+func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc, ctn di.Container) (api.Server, error) {
 	var p usecase.Poster
 	if err := ctn.Fill(usecase.TWITTER, &p); err != nil {
 		cancel()
-		return nil
+		return nil, err
 	}
 
 	cfg := ctn.Get(config.NAME).(*config.Config)
@@ -44,7 +44,7 @@ func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc, ctn di.Con
 		cancel: cancel,
 		ctx:    ctx,
 		poster: p,
-	}
+	}, nil
 }
 
 func (t *TwitterWorker) Start() error {

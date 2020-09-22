@@ -1,7 +1,9 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -12,7 +14,9 @@ import (
 	"github.com/IgorAndrade/analytics-twitter/server/internal/repository"
 	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sarulabs/di"
+	"github.com/yalp/jsonpath"
 )
 
 const INDEX string = "analytics-twitter"
@@ -73,4 +77,37 @@ func (s Elasticsearch) Post(id int64, m model.Post) error {
 	}
 	fmt.Println(id, m)
 	return err
+}
+
+func (s Elasticsearch) Find(ctx context.Context, query map[string]string) ([]model.Post, error) {
+	var posts []model.Post
+	buf := new(bytes.Buffer)
+	queryBody := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": query,
+		},
+	}
+	json.NewEncoder(buf).Encode(queryBody)
+	es, err := s.client.Search(
+		s.client.Search.WithContext(ctx),
+		s.client.Search.WithIndex(INDEX),
+		s.client.Search.WithBody(buf),
+		s.client.Search.WithTrackTotalHits(true),
+		s.client.Search.WithPretty(),
+	)
+	if err != nil {
+		return posts, err
+	}
+	var data interface{}
+	if err := json.NewDecoder(es.Body).Decode(&data); err != nil {
+		return posts, err
+	}
+	fmt.Println(err)
+	raw, err := jsonpath.Read(data, "$.._source")
+	if err != nil {
+		return posts, err
+	}
+
+	mapstructure.Decode(raw, &posts)
+	return posts, nil
 }

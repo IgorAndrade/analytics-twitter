@@ -21,8 +21,9 @@ func adapter(tweet *twitter.Tweet) model.Post {
 	post.Mentions = getMentions(tweet.Text)
 
 	if tweet.RetweetedStatus != nil && tweet.RetweetedStatus.ExtendedTweet != nil {
-		post.Location = tweet.RetweetedStatus.User.Location
-		rt := tweet.RetweetedStatus.ExtendedTweet
+		rs := tweet.RetweetedStatus
+		rt := rs.ExtendedTweet
+		post.Location = rs.User.Location
 		post.Text = rt.FullText
 		hastag := make([]string, len(rt.Entities.Hashtags))
 		for i, h := range rt.Entities.Hashtags {
@@ -30,8 +31,8 @@ func adapter(tweet *twitter.Tweet) model.Post {
 		}
 		post.Hastags = hastag
 		mentions := make([]string, 0)
-		if tweet.RetweetedStatus.ExtendedTweet.Entities != nil {
-			for _, m := range tweet.RetweetedStatus.ExtendedTweet.Entities.UserMentions {
+		if rt.Entities != nil {
+			for _, m := range rt.Entities.UserMentions {
 				mentions = append(mentions, m.ScreenName)
 			}
 			post.Mentions = mentions
