@@ -9,6 +9,7 @@ const TWITTER = "UC-Twitter"
 
 type Usecase interface {
 	Poster
+	Search
 }
 
 type Twitter struct {
