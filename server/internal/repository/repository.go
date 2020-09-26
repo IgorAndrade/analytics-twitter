@@ -15,6 +15,6 @@ type TodoList interface {
 }
 
 type Elasticsearch interface {
-	Post(int64, model.Post) error
+	Post(model.Post) error
 	Find(ctx context.Context, query map[string]string) ([]model.Post, error)
 }

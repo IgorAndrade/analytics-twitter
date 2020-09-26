@@ -6,6 +6,7 @@ import (
 )
 
 type Post struct {
+	ID        string    `json:"id,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	Author    string    `json:"author,omitempty"`
 	Hastags   []string  `json:"hastags,omitempty"`

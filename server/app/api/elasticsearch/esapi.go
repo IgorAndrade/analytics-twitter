@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/IgorAndrade/analytics-twitter/server/app/config"
@@ -63,11 +62,11 @@ func newServer(cfg config.Elasticsearch) (repository.Elasticsearch, error) {
 	}, nil
 }
 
-func (s Elasticsearch) Post(id int64, m model.Post) error {
+func (s Elasticsearch) Post(m model.Post) error {
 	req := esapi.IndexRequest{
 		Index:        INDEX,
 		DocumentType: DOCUMENTTYPE,
-		DocumentID:   strconv.Itoa(int(id)),
+		DocumentID:   m.ID,
 		Body:         strings.NewReader(m.String()),
 		Refresh:      "true",
 	}
@@ -76,7 +75,7 @@ func (s Elasticsearch) Post(id int64, m model.Post) error {
 	if res != nil {
 		res.Body.Close()
 	}
-	fmt.Println(id, m)
+	fmt.Println(m)
 	return err
 }
 

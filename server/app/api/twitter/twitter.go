@@ -14,9 +14,12 @@ import (
 	"github.com/sarulabs/di"
 )
 
+type TwitterListener interface {
+	Listen(context.Context, chan model.Post, ...ListenOptions) (func(), error)
+}
+
 type TwitterWorker struct {
 	client *twitter.Client
-	stream *twitter.Stream
 	ctx    context.Context
 	cancel context.CancelFunc
 	poster usecase.Poster
@@ -47,27 +50,59 @@ func NewTwitterWorker(ctx context.Context, cancel context.CancelFunc, ctn di.Con
 	}, nil
 }
 
+type ListenOptions func(*twitter.StreamFilterParams)
+
+func (t *TwitterWorker) Listen(ctx context.Context, ch chan model.Post, fnc ...ListenOptions) error {
+	filterParams := &twitter.StreamFilterParams{
+		Track:         []string{},
+		Language:      []string{"pt", "en"},
+		StallWarnings: twitter.Bool(false),
+	}
+
+	for _, f := range fnc {
+		f(filterParams)
+	}
+
+	stream, err := t.client.Streams.Filter(filterParams)
+	if err != nil {
+		return err
+	}
+
+	demux := twitter.NewSwitchDemux()
+	demux.Tweet = func(tweet *twitter.Tweet) {
+		ch <- adapter(tweet)
+	}
+
+loop:
+	for {
+		select {
+		case msg := <-stream.Messages:
+			demux.Handle(msg)
+		case <-ctx.Done():
+			stream.Stop()
+			break loop
+		}
+	}
+	return nil
+}
+
+func WithTrack(itens []string) ListenOptions {
+	return func(param *twitter.StreamFilterParams) {
+		param.Track = itens
+	}
+}
+
+func WithLanguage(Langs []string) ListenOptions {
+	return func(param *twitter.StreamFilterParams) {
+		param.Language = Langs
+	}
+}
+
 func (t *TwitterWorker) Start() error {
 	fmt.Println("Starting TwitterWorker")
 	defer t.cancel()
 
-	// filterParams := &twitter.StreamFilterParams{
-	// 	Track:         []string{"Golang", "Java", "nodejs"},
-	// 	Language:      []string{"pt", "en"},
-	// 	StallWarnings: twitter.Bool(false),
-	// }
-	// stream, err := t.client.Streams.Filter(filterParams)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// t.stream = stream
-
-	// demux := twitter.NewSwitchDemux()
-	// demux.Tweet = handlerTweet(t.poster.SavePost)
-
-	t.listemTimeline()
-	//demux.HandleChan(stream.Messages)
+	t.listenTimeline()
 	return nil
 }
 
@@ -80,14 +115,11 @@ func handlerTweet(send func(int64, model.Post)) func(*twitter.Tweet) {
 func (t TwitterWorker) Stop() error {
 	fmt.Println("Stopping TwitterWorker")
 	t.cancel()
-	if t.stream != nil {
-		t.stream.Stop()
-	}
 	return nil
 }
 
-func (tw TwitterWorker) listemTimeline() {
-	ticker := time.NewTicker(5 * time.Second)
+func (tw TwitterWorker) listenTimeline() {
+	ticker := time.NewTicker(time.Second)
 	var id int64 = 0
 loop:
 	for {
@@ -105,7 +137,7 @@ loop:
 					if id == tweet.ID {
 						continue
 					}
-					tw.poster.Save(tweet.ID, adapter(&tweet))
+					tw.poster.Save(adapter(&tweet))
 					id = tweet.ID
 				}
 			}

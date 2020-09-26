@@ -10,7 +10,7 @@ import (
 )
 
 func adapter(tweet *twitter.Tweet) model.Post {
-	post := model.Post{}
+	post := model.Post{ID: string(tweet.ID)}
 	date, _ := time.Parse(time.RubyDate, tweet.CreatedAt)
 	post.CreatedAt = date.Local()
 	post.Author = tweet.User.Name
