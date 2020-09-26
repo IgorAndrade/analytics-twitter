@@ -2,6 +2,7 @@ package route
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/IgorAndrade/analytics-twitter/server/internal/usecase"
 	"github.com/labstack/echo/v4"
@@ -20,7 +21,9 @@ func query(c echo.Context, ctn GetterDI) error {
 	if err := json.Unmarshal([]byte(query), &m); err != nil {
 		return err
 	}
-
-	return service.Find(m)
-
+	list, err := service.Find(c.Request().Context(), m)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, list)
 }

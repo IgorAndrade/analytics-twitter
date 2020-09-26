@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"strconv"
 	"strings"
@@ -80,7 +81,7 @@ func (s Elasticsearch) Post(id int64, m model.Post) error {
 }
 
 func (s Elasticsearch) Find(ctx context.Context, query map[string]string) ([]model.Post, error) {
-	var posts []model.Post
+
 	buf := new(bytes.Buffer)
 	queryBody := map[string]interface{}{
 		"query": map[string]interface{}{
@@ -96,13 +97,18 @@ func (s Elasticsearch) Find(ctx context.Context, query map[string]string) ([]mod
 		s.client.Search.WithPretty(),
 	)
 	if err != nil {
-		return posts, err
+		return nil, err
 	}
+
+	return adpter(es.Body)
+}
+
+func adpter(rc io.ReadCloser) ([]model.Post, error) {
+	var posts []model.Post
 	var data interface{}
-	if err := json.NewDecoder(es.Body).Decode(&data); err != nil {
+	if err := json.NewDecoder(rc).Decode(&data); err != nil {
 		return posts, err
 	}
-	fmt.Println(err)
 	raw, err := jsonpath.Read(data, "$.._source")
 	if err != nil {
 		return posts, err
